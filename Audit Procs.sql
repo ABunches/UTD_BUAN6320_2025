@@ -1,5 +1,30 @@
+## SchemaChangeLog
+CREATE TABLE IF NOT EXISTS contoso.SchemaChangeLog (
+	SchemaChangeLogKey INT NOT NULL AUTO_INCREMENT
+	,SchemaName VARCHAR(128) NOT NULL
+	,TableName VARCHAR(128) NOT NULL
+	,ExecutedSQL TEXT NOT NULL
+	,ExecutedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+	,ExecutedBy VARCHAR(255)
+	,PRIMARY KEY (SchemaChangeLogKey)
+);            
+				
+DELIMITER //             
+CREATE PROCEDURE contoso.LogSchemaChange (
+    IN SchemaName VARCHAR(128),
+    IN TableName VARCHAR(128),
+    IN ExecutedSQL TEXT
+)
+BEGIN
+    INSERT INTO SchemaChangeLog (SchemaName, TableName, ExecutedSQL)
+    VALUES (SchemaName, TableName, ExecutedSQL);
+END;
+
+// DELIMITER ;
+
+
 DELIMITER //
-CREATE PROCEDURE AddMissingAuditColumns(IN target_schema VARCHAR(64))
+CREATE PROCEDURE contoso.AddMissingAuditColumns(IN target_schema VARCHAR(64))
 BEGIN
     DECLARE done INT DEFAULT 0;
     DECLARE tbl_name VARCHAR(64);
@@ -62,49 +87,23 @@ BEGIN
             SET @sql_parts := CONCAT(@sql_parts, ', ADD COLUMN UpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
         END IF;
 
-        -- Execute if there's something to alter
+        -- Execute ALTER TABLE if needed
         IF LENGTH(@sql_parts) > 0 THEN
             SET @alter_stmt := CONCAT('ALTER TABLE `', target_schema, '`.`', tbl_name, '`', 
                                       SUBSTRING(@sql_parts, 2), ';');
             PREPARE stmt FROM @alter_stmt;
             EXECUTE stmt;
             DEALLOCATE PREPARE stmt;
+
+            -- Log the executed SQL
+            CALL LogSchemaChange(target_schema, tbl_name, @alter_stmt);
         END IF;
 
     END LOOP;
 
     CLOSE cursor_tables;
 END;
-//
+// DELIMITER ;
 
-DELIMITER ;
-
-
-CREATE TABLE IF NOT EXISTS SchemaChangeLog (
-    LogId INT AUTO_INCREMENT PRIMARY KEY
-    ,SchemaName VARCHAR(128) NOT NULL
-    ,TableName VARCHAR(128) NOT NULL
-    ,ExecutedSQL TEXT NOT NULL
-    ,ExecutedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    ,ExecutedBy VARCHAR(255) DEFAULT CURRENT_USER()
-);
-
-
-DELIMITER //
-
-CREATE PROCEDURE LogSchemaChange (
-    IN SchemaName VARCHAR(128),
-    IN TableName VARCHAR(128),
-    IN ExecutedSQL TEXT
-)
-BEGIN
-    INSERT INTO SchemaChangeLog (SchemaName, TableName, ExecutedSQL)
-    VALUES (SchemaName, TableName, ExecutedSQL);
-END;
-//
-
-DELIMITER ;
-
-
-CALL LogSchemaChange('my_database', 'Users', 'ALTER TABLE Users ADD COLUMN CreatedBy VARCHAR(255) NOT NULL;');
-
+USE Contoso;
+CALL AddMissingAuditColumns('contoso'); 
