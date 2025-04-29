@@ -3,6 +3,86 @@ SELECT *
 FROM contoso.date
 LIMIT 10;
 
+        
+ # Derive new tables! 
+ 
+	## Users
+	DROP TABLE IF EXISTS Contoso.users;
+	CREATE TABLE IF NOT EXISTS Users (
+		UserId INT NOT NULL AUTO_INCREMENT
+		,UserName VARCHAR(100) NOT NULL UNIQUE
+		,FirstName VARCHAR(255)NOT NULL
+		,LastName VARCHAR(255) NOT NULL
+		,UpdatedBy VARCHAR(255) NOT NULL
+		,UpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+		,CreatedBy VARCHAR(255) NOT NULL
+		,CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
+		,PRIMARY KEY (UserId)
+	);
+
+	INSERT INTO Users 	(UserName				,FirstName	,LastName	,UpdatedBy	,UpdatedDate		,CreatedBy	,CreatedDate)
+			VALUES		("Admin@LocalHost"		,"Service"	,"Account"	,"Admin"	,current_timestamp	,"Admin"	,"2024-06-01 09:15:00"),
+						("Sudo@LocalHost"		,"Alex"		,"Bunch"	,"Admin"	,current_timestamp	,"Admin"	,"2024-06-01 09:15:01"),
+						("jdoe@LocalHost"		,"John"		,"Doe"		,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-01 09:15:00"),
+						("asmith@LocalHost"		,"Anna"		,"Smith"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-02 14:22:00"),
+						("bchan@LocalHost"		,"Brian"	,"Chan"		,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-03 08:30:00"),
+						("mgarcia@LocalHost"	,"Maria"	,"Garcia"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-04 10:45:00"),
+						("kwilson@LocalHost"	,"Kevin"	,"Wilson"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-05 13:00:00"),
+						("lpatel@LocalHost"		,"Leena"	,"Patel"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-06 16:10:00"),
+						("tjohnson@LocalHost"	,"Tom"		,"Johnson"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-07 11:30:00"),
+						("ycho@LocalHost"		,"Yuna"		,"Cho"		,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-08 15:20:00");
+			
+ 
+	## GeoArea
+    DROP TABLE IF EXISTS contoso.GeoArea;
+    CREATE TABLE IF NOT EXISTS contoso.GeoArea (
+		GeoAreaKey INT NOT NULL
+		, State VARCHAR(255)
+		, StateFull VARCHAR(255)
+		, Country VARCHAR(255)
+		, CountryFull VARCHAR(255)
+	);
+    INSERT INTO contoso.GeoArea ( GeoAreaKey, State, StateFull, Country, CountryFull)
+		-- Trim functions due to bad record
+		SELECT DISTINCT 
+			GeoAreaKey
+			,TRIM(State)
+			,TRIM(StateFull)
+			,TRIM(Country)
+			,TRIM(CountryFull)
+			
+		FROM contoso.customer
+
+		ORDER BY
+			GeoAreaKey ASC
+			,StateFull ASC;
+        
+        
+    ## ProductCategorySubCategory
+	DROP TABLE IF EXISTS contoso.ProductCategorySubCategory;
+	CREATE TABLE ProductCategory (
+		ProductCategoryKey INT NOT NULL AUTO_INCREMENT
+		,CategoryKey INT NOT NULL
+		,CategoryName VARCHAR(255)
+		,SubCategoryKey INT NOT NULL
+		,SubCategoryName VARCHAR(255)
+		,UpdatedBy VARCHAR(255) NOT NULL
+		,UpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+		,CreatedBy VARCHAR(255) NOT NULL
+		,CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
+		,PRIMARY KEY (ProductCategoryKey)
+	);
+	INSERT INTO contoso.ProductCategory (CategoryKey,CategoryName,SubCategoryKey,SubCategoryName,UpdatedBy,CreatedBy)
+	SELECT DISTINCT
+		TRIM(CategoryKey)
+		,TRIM(CategoryName)
+		,TRIM(SubCategoryKey)
+		,TRIM(SubCategoryName)
+		,CURRENT_USER() as 'UpdatedBy'
+		,CURRENT_USER() as 'CreatedBy'
+	FROM contoso.product;
+	
+    
 
 # Table Modifications
 	## currencyexchange
@@ -94,103 +174,61 @@ LIMIT 10;
     ## store
 		ALTER TABLE contoso.store
         ADD PRIMARY KEY (StoreKey);
-        
-        
- # Derive new tables! 
-	## Users
-		DROP TABLE IF EXISTS Contoso.users;
-		CREATE TABLE Users (
-			UserId INT NOT NULL AUTO_INCREMENT
-			,UserName VARCHAR(100) NOT NULL UNIQUE
-			,FirstName VARCHAR(255)NOT NULL
-			,LastName VARCHAR(255) NOT NULL
-			,UpdatedBy VARCHAR(255) NOT NULL
-			,UpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-			,CreatedBy VARCHAR(255) NOT NULL
-			,CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
-			,PRIMARY KEY (UserId)
-		);
 
-		INSERT INTO Users 	(UserName				,FirstName	,LastName	,UpdatedBy	,UpdatedDate		,CreatedBy	,CreatedDate)
-				VALUES		("Admin@LocalHost"		,"Service"	,"Account"	,"Admin"	,current_timestamp	,"Admin"	,"2024-06-01 09:15:00"),
-							("Sudo@LocalHost"		,"Alex"		,"Bunch"	,"Admin"	,current_timestamp	,"Admin"	,"2024-06-01 09:15:01"),
-							("jdoe@LocalHost"		,"John"		,"Doe"		,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-01 09:15:00"),
-							("asmith@LocalHost"		,"Anna"		,"Smith"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-02 14:22:00"),
-							("bchan@LocalHost"		,"Brian"	,"Chan"		,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-03 08:30:00"),
-							("mgarcia@LocalHost"	,"Maria"	,"Garcia"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-04 10:45:00"),
-							("kwilson@LocalHost"	,"Kevin"	,"Wilson"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-05 13:00:00"),
-							("lpatel@LocalHost"		,"Leena"	,"Patel"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-06 16:10:00"),
-							("tjohnson@LocalHost"	,"Tom"		,"Johnson"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-07 11:30:00"),
-							("ycho@LocalHost"		,"Yuna"		,"Cho"		,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-08 15:20:00");
-			
- 
+	## ProductCategory
+    
+	ALTER TABLE contoso.ProductCategory ADD INDEX idx_ProductCategory(CategoryKey);
+	ALTER TABLE contoso.ProductCategory ADD INDEX idx_SubCategoryKey(SubCategoryKey);
+	ALTER TABLE contoso.ProductCategory ADD INDEX idx_CategoryName(CategoryName);
+	ALTER TABLE contoso.ProductCategory ADD INDEX idx_SubCategoryName(SubCategoryName);
+    
 	## GeoArea
-    DROP TABLE IF EXISTS contoso.GeoArea;
-    CREATE TABLE IF NOT EXISTS contoso.GeoArea (GeoAreaKey INT NOT NULL, State VARCHAR(255), StateFull VARCHAR(255), Country VARCHAR(255), CountryFull VARCHAR(255));
-    INSERT INTO contoso.GeoArea ( GeoAreaKey, State, StateFull, Country, CountryFull)
-		-- Trim functions due to bad record
-		SELECT DISTINCT 
-			GeoAreaKey
-			,TRIM(State)
-			,TRIM(StateFull)
-			,TRIM(Country)
-			,TRIM(CountryFull)
-			
-		FROM contoso.customer
-
-		ORDER BY
-			GeoAreaKey ASC
-			,StateFull ASC;
-			
-    ALTER TABLE contoso.GeoArea ADD PRIMARY KEY(GeoAreaKey);        
+	ALTER TABLE contoso.GeoArea ADD PRIMARY KEY(GeoAreaKey);        
 	ALTER TABLE contoso.GeoArea MODIFY COLUMN GeoAreaKey INT NOT NULL AUTO_INCREMENT; 
-        
-    ## ProductCategory
-		DROP TABLE IF EXISTS contoso.ProductCategory;
-		CREATE TABLE ProductCategory (
-			ProductCategoryKey INT NOT NULL AUTO_INCREMENT
-			,CategoryKey INT NOT NULL
-			,CategoryName VARCHAR(255)
-			,SubCategoryKey INT NOT NULL
-			,SubCategoryName VARCHAR(255)
-			,UpdatedBy VARCHAR(255) NOT NULL
-			,UpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-			,CreatedBy VARCHAR(255) NOT NULL
-			,CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
-			,PRIMARY KEY (ProductCategoryKey)
-		);
-        
-       	ALTER TABLE contoso.ProductCategory ADD INDEX idx_ProductCategory(CategoryKey);
-		ALTER TABLE contoso.ProductCategory ADD INDEX idx_SubCategoryKey(SubCategoryKey);
-		ALTER TABLE contoso.ProductCategory ADD INDEX idx_CategoryName(CategoryName);
-		ALTER TABLE contoso.ProductCategory ADD INDEX idx_SubCategoryName(SubCategoryName);
-        
-		INSERT INTO contoso.ProductCategory (CategoryKey,CategoryName,SubCategoryKey,SubCategoryName,UpdatedBy,CreatedBy)
-		SELECT DISTINCT
-			TRIM(CategoryKey)
-			,TRIM(CategoryName)
-			,TRIM(SubCategoryKey)
-			,TRIM(SubCategoryName)
-			,CURRENT_USER() as 'UpdatedBy'
-			,CURRENT_USER() as 'CreatedBy'
-		FROM contoso.product
-		;
-			
-     
-# Creating the priamry/foreign key relationships!    
 
-    ALTER TABLE contoso.currencyexchange
-	ADD CONSTRAINT fk_customer_geoarea
-	FOREIGN KEY (column_name)
-	REFERENCES referenced_table(referenced_column)
-    -- ON DELETE CASCADE
-	ON UPDATE CASCADE;
-
+# Creating the primary/foreign key relationships!    --in progress
 
     ALTER TABLE contoso.customer
 	ADD CONSTRAINT fk_customer_geoarea
-	FOREIGN KEY (column_name)
-	REFERENCES referenced_table(referenced_column)
-    -- ON DELETE CASCADE
-	ON UPDATE CASCADE;
+	FOREIGN KEY (GeoAreaKey)
+	REFERENCES GeoArea(GeoAreaKey);
 
+    ALTER TABLE contoso.orderrows
+	ADD CONSTRAINT fk_orderrows_orders
+	FOREIGN KEY (orderkey)
+	REFERENCES orders(orderkey);
+    
+	ALTER TABLE contoso.orderrows
+	ADD CONSTRAINT fk_orderrows_product
+	FOREIGN KEY (ProductKey)
+	REFERENCES Product(ProductKey);
+    
+	ALTER TABLE contoso.orders
+	ADD CONSTRAINT fk_orders_customer
+	FOREIGN KEY (CustomerKey)
+	REFERENCES Customer(CustomerKey);
+
+	ALTER TABLE contoso.orders
+	ADD CONSTRAINT fk_orders_store
+	FOREIGN KEY (StoreKey)
+	REFERENCES store(StoreKey);
+        
+	ALTER TABLE contoso.sales
+	ADD CONSTRAINT fk_sales_orders
+	FOREIGN KEY (OrderKey)
+	REFERENCES Orders(OrderKey);
+    
+	ALTER TABLE contoso.sales
+	ADD CONSTRAINT fk_sales_customer
+	FOREIGN KEY (CustomerKey)
+	REFERENCES Customer(CustomerKey);
+    
+	ALTER TABLE contoso.sales
+	ADD CONSTRAINT fk_sales_store
+	FOREIGN KEY (StoreKey)
+	REFERENCES Store(StoreKey);
+    
+    ALTER TABLE contoso.sales
+	ADD CONSTRAINT fk_sales_product
+	FOREIGN KEY (productkey)
+	REFERENCES product(productkey);
