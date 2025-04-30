@@ -1,4 +1,6 @@
-USE Contoso;
+
+SELECT * FROM INFORMATION_SCHEMA.Triggers WHERE TRIGGER_SCHEMA = 'contoso';
+
 
 DELIMITER //
 CREATE TRIGGER currencyexchange_set_random_updated_by
@@ -15,9 +17,8 @@ BEGIN
   LIMIT 1;
 
   SET NEW.UpdatedBy = random_username;
+  SET NEW.UpdatedDate = NOW();
 END;
-// DELIMITER ;
-
 
 CREATE TRIGGER customer_set_random_updated_by
 BEFORE UPDATE ON contoso.customer
@@ -33,6 +34,7 @@ BEGIN
   LIMIT 1;
 
   SET NEW.UpdatedBy = random_username;
+  SET NEW.UpdatedDate = NOW();
 END;
 
 
@@ -50,6 +52,7 @@ BEGIN
   LIMIT 1;
 
   SET NEW.UpdatedBy = random_username;
+  SET NEW.UpdatedDate = NOW();
 END;
 
 
@@ -67,6 +70,7 @@ BEGIN
   LIMIT 1;
 
   SET NEW.UpdatedBy = random_username;
+  SET NEW.UpdatedDate = NOW();
 END;
 
 
@@ -84,6 +88,7 @@ BEGIN
   LIMIT 1;
 
   SET NEW.UpdatedBy = random_username;
+  SET NEW.UpdatedDate = NOW();
 END;
 
 
@@ -101,6 +106,7 @@ BEGIN
   LIMIT 1;
 
   SET NEW.UpdatedBy = random_username;
+  SET NEW.UpdatedDate = NOW();
 END;
 
 
@@ -118,6 +124,7 @@ BEGIN
   LIMIT 1;
 
   SET NEW.UpdatedBy = random_username;
+  SET NEW.UpdatedDate = NOW();
 END;
 
 
@@ -135,6 +142,7 @@ BEGIN
   LIMIT 1;
 
   SET NEW.UpdatedBy = random_username;
+  SET NEW.UpdatedDate = NOW();
 END;
 
 CREATE TRIGGER store_set_random_updated_by
@@ -151,6 +159,7 @@ BEGIN
   LIMIT 1;
 
   SET NEW.UpdatedBy = random_username;
+  SET NEW.UpdatedDate = NOW();
 END;
 
 CREATE TRIGGER users_set_random_updated_by
@@ -167,5 +176,8 @@ BEGIN
   LIMIT 1;
 
   SET NEW.UpdatedBy = random_username;
+  SET NEW.UpdatedDate = NOW();
 END;
+
+// DELIMITER ;
 
