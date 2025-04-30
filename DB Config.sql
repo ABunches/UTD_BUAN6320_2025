@@ -1,21 +1,16 @@
 USE Contoso;
-SELECT *
-FROM contoso.date
-LIMIT 10;
-
-        
  # Derive new tables! 
  
 	## Users
 	DROP TABLE IF EXISTS Contoso.users;
 	CREATE TABLE IF NOT EXISTS Users (
-		UserId INT NOT NULL AUTO_INCREMENT
+		UserKey INT NOT NULL AUTO_INCREMENT
 		,UserName VARCHAR(100) NOT NULL UNIQUE
 		,FirstName VARCHAR(255)NOT NULL
 		,LastName VARCHAR(255) NOT NULL
-		,UpdatedBy VARCHAR(255) NOT NULL
+		,UpdatedBy VARCHAR(255)
 		,UpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-		,CreatedBy VARCHAR(255) NOT NULL
+		,CreatedBy VARCHAR(255)
 		,CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
 		,PRIMARY KEY (UserId)
 	);
@@ -32,6 +27,19 @@ LIMIT 10;
 						("tjohnson@LocalHost"	,"Tom"		,"Johnson"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-07 11:30:00"),
 						("ycho@LocalHost"		,"Yuna"		,"Cho"		,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-08 15:20:00");
 			
+            
+	## SchemaChangeLog
+    DROP TABLE IF EXISTS contoso.SchemaChangeLog;
+	 CREATE TABLE IF NOT EXISTS contoso.SchemaChangeLog (
+		SchemaChangeLogKey INT NOT NULL AUTO_INCREMENT
+		,SchemaName VARCHAR(128) NOT NULL
+		,TableName VARCHAR(128) NOT NULL
+		,ExecutedSQL TEXT NOT NULL
+		,ExecutedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+		,ExecutedBy VARCHAR(255)
+		,PRIMARY KEY (SchemaChangeLogKey)
+	);            
+
  
 	## GeoArea
     DROP TABLE IF EXISTS contoso.GeoArea;
@@ -66,9 +74,9 @@ LIMIT 10;
 		,CategoryName VARCHAR(255)
 		,SubCategoryKey INT NOT NULL
 		,SubCategoryName VARCHAR(255)
-		,UpdatedBy VARCHAR(255) NOT NULL
+		,UpdatedBy VARCHAR(255)
 		,UpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-		,CreatedBy VARCHAR(255) NOT NULL
+		,CreatedBy VARCHAR(255)
 		,CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
 		,PRIMARY KEY (ProductCategoryKey)
 	);
@@ -176,18 +184,27 @@ LIMIT 10;
         ADD PRIMARY KEY (StoreKey);
 
 	## ProductCategory
-    
-	ALTER TABLE contoso.ProductCategory ADD INDEX idx_ProductCategory(CategoryKey);
-	ALTER TABLE contoso.ProductCategory ADD INDEX idx_SubCategoryKey(SubCategoryKey);
-	ALTER TABLE contoso.ProductCategory ADD INDEX idx_CategoryName(CategoryName);
-	ALTER TABLE contoso.ProductCategory ADD INDEX idx_SubCategoryName(SubCategoryName);
+		ALTER TABLE contoso.ProductCategory 
+        ADD INDEX idx_ProductCategory(CategoryKey);
+		
+        ALTER TABLE contoso.ProductCategory 
+        ADD INDEX idx_SubCategoryKey(SubCategoryKey);
+		
+        ALTER TABLE contoso.ProductCategory 
+        ADD INDEX idx_CategoryName(CategoryName);
+		
+        ALTER TABLE contoso.ProductCategory 
+        ADD INDEX idx_SubCategoryName(SubCategoryName);
     
 	## GeoArea
-	ALTER TABLE contoso.GeoArea ADD PRIMARY KEY(GeoAreaKey);        
-	ALTER TABLE contoso.GeoArea MODIFY COLUMN GeoAreaKey INT NOT NULL AUTO_INCREMENT; 
+		ALTER TABLE contoso.GeoArea 
+        ADD PRIMARY KEY(GeoAreaKey);        
+        
+		ALTER TABLE contoso.GeoArea 
+        MODIFY COLUMN GeoAreaKey INT NOT NULL AUTO_INCREMENT; 
 
 # Creating the primary/foreign key relationships!    --in progress
-
+DELIMITER //
     ALTER TABLE contoso.customer
 	ADD CONSTRAINT fk_customer_geoarea
 	FOREIGN KEY (GeoAreaKey)
@@ -232,3 +249,37 @@ LIMIT 10;
 	ADD CONSTRAINT fk_sales_product
 	FOREIGN KEY (productkey)
 	REFERENCES product(productkey);
+    
+// DELIMITER ;
+
+
+
+
+-- Warehouse table
+	-- defines a list of warehouse locations similar to how contoso.stores works 
+
+-- WarehouseInventory table 
+	-- a mix of the product table things
+    -- reverse built, ref orderrows, choose ending balance of some product at a warehouse, 
+    
+-- WarehouseOrders
+	-- Description of product orders for warehouse inventory
+		-- Order Date
+        -- Shipped Date
+        -- product
+        -- qty
+        -- unit price 
+        -- shipping cost
+        -- net cost 
+        -- estimated delivery
+        
+-- Suppliers
+	-- List of Goods suppliers 
+
+
+-- SupplierStats
+	-- Described Suplier information to calc shipping and inventories 
+
+
+
+
