@@ -1,7 +1,5 @@
 USE contoso;
 
-
-
 DELIMITER //
 -- return random date
 CREATE FUNCTION RandomDate(start_date DATE, end_date DATE)

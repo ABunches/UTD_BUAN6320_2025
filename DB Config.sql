@@ -3,7 +3,7 @@ USE Contoso;
  
 	## Users
 	DROP TABLE IF EXISTS Contoso.users;
-	CREATE TABLE IF NOT EXISTS Users (
+	CREATE TABLE IF NOT EXISTS contoso.Users (
 		UserKey INT NOT NULL AUTO_INCREMENT
 		,UserName VARCHAR(100) NOT NULL UNIQUE
 		,FirstName VARCHAR(255)NOT NULL
@@ -12,7 +12,7 @@ USE Contoso;
 		,UpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 		,CreatedBy VARCHAR(255)
 		,CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
-		,PRIMARY KEY (UserId)
+		,PRIMARY KEY (UserKey)
 	);
 
 	INSERT INTO Users 	(UserName				,FirstName	,LastName	,UpdatedBy	,UpdatedDate		,CreatedBy	,CreatedDate)
@@ -54,10 +54,10 @@ USE Contoso;
 		-- Trim functions due to bad record
 		SELECT DISTINCT 
 			GeoAreaKey
-			,TRIM(State)
-			,TRIM(StateFull)
-			,TRIM(Country)
-			,TRIM(CountryFull)
+			,TRIM(State) 'State'
+			,TRIM(StateFull) 'StateFull'
+			,TRIM(Country) 'Country'
+			,TRIM(CountryFull) 'CountryFull'
 			
 		FROM contoso.customer
 
@@ -75,33 +75,32 @@ USE Contoso;
 		,SubCategoryKey INT NOT NULL
 		,SubCategoryName VARCHAR(255)
 		,UpdatedBy VARCHAR(255)
-		,UpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+		,UpdatedDate DATETIME
 		,CreatedBy VARCHAR(255)
 		,CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
 		,PRIMARY KEY (ProductCategoryKey)
 	);
 	INSERT INTO contoso.ProductCategory (CategoryKey,CategoryName,SubCategoryKey,SubCategoryName,UpdatedBy,CreatedBy)
 	SELECT DISTINCT
-		TRIM(CategoryKey)
-		,TRIM(CategoryName)
-		,TRIM(SubCategoryKey)
-		,TRIM(SubCategoryName)
-		,CURRENT_USER() as 'UpdatedBy'
+		TRIM(CategoryKey) 'CategoryKey'
+		,TRIM(CategoryName) 'CategoryName'
+		,TRIM(SubCategoryKey) 'SubCategoryKey'
+		,TRIM(SubCategoryName)'SubCategoryName'
+		,NULL as 'UpdatedBy'
 		,CURRENT_USER() as 'CreatedBy'
-	FROM contoso.product;
 	
+    FROM contoso.product
+
+    ORDER BY 
+		CategoryKey ASC;
     
 
 # Table Modifications
 	## currencyexchange
-
+    
 		### Add Key Column, set to first ordinal position
 		ALTER TABLE contoso.currencyexchange
-		ADD COLUMN CurrencyExchangeKey INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST;
-
-		### update the new key column
-		SET @rownum = 0;
-		UPDATE contoso.currencyexchange SET CurrencyExchangeKey = (@rownum := @rownum + 1);
+		ADD COLUMN CurrencyExchangeKey INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST;		
 
 		### add new constraint to the table to ensure integrity
 		ALTER TABLE contoso.currencyexchange
@@ -145,9 +144,6 @@ USE Contoso;
 		ALTER TABLE contoso.orderrows
 		ADD COLUMN OrderRowsKey INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST;
 
-		### update the new key column
-		SET @rownum = 0;
-		UPDATE contoso.orderrows SET OrderRowsKey = (@rownum := @rownum + 1);
     
 		### add new constraint to the table to ensure integrity
 		ALTER TABLE contoso.orderrows
@@ -171,10 +167,6 @@ USE Contoso;
 		ALTER TABLE contoso.sales
 		ADD COLUMN SalesKey INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST;
 
-		### update the new key column
-		SET @rownum = 0;
-		UPDATE contoso.Sales SET SalesKey = (@rownum := @rownum + 1);
-    
 		### add new constraint to the table to ensure integrity
 		ALTER TABLE contoso.Sales
 		ADD CONSTRAINT unique_orderkey_linenumber UNIQUE (OrderKey, Linenumber);
@@ -202,6 +194,23 @@ USE Contoso;
         
 		ALTER TABLE contoso.GeoArea 
         MODIFY COLUMN GeoAreaKey INT NOT NULL AUTO_INCREMENT; 
+
+// DELIMITER ;
+
+
+DELIMITER //
+  
+	## Update Keys. 
+		SET @rownum = 0;
+		UPDATE contoso.Sales SET SalesKey = (@rownum := @rownum + 1);
+		SET @rownum = 0;
+		UPDATE contoso.orderrows SET OrderRowsKey = (@rownum := @rownum + 1);
+			### update the new key column
+		SET @rownum = 0;
+		UPDATE contoso.currencyexchange SET CurrencyExchangeKey = (@rownum := @rownum + 1);
+    
+// DELIMITER ;
+
 
 # Creating the primary/foreign key relationships!    --in progress
 DELIMITER //
@@ -250,10 +259,6 @@ DELIMITER //
 	FOREIGN KEY (productkey)
 	REFERENCES product(productkey);
     
-// DELIMITER ;
-
-
-
 
 -- Warehouse table
 	-- defines a list of warehouse locations similar to how contoso.stores works 
@@ -272,6 +277,9 @@ DELIMITER //
         -- shipping cost
         -- net cost 
         -- estimated delivery
+        -- vendorid ordered from
+        -- destination warehouse id 
+        -- IsRcvd
         
 -- Suppliers
 	-- List of Goods suppliers 
@@ -279,7 +287,23 @@ DELIMITER //
 
 -- SupplierStats
 	-- Described Suplier information to calc shipping and inventories 
+	-- prices
+    -- products
+    
+	
+-- homework 5 
+-- quiz 3 
+-- project 
 
+;
 
-
-
+SELECT 
+    TABLE_SCHEMA,
+    TABLE_NAME,
+    INDEX_NAME,
+    COLUMN_NAME,
+    NON_UNIQUE,
+    SEQ_IN_INDEX
+FROM INFORMATION_SCHEMA.STATISTICS
+WHERE TABLE_SCHEMA = 'contoso'
+;

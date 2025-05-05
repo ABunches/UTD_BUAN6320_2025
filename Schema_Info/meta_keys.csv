@@ -1,0 +1,17 @@
+TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME
+currencyexchange,CurrencyExchangeKey,PRIMARY,NULL,NULL
+currencyexchange,Date,unique_date_from_to,NULL,NULL
+currencyexchange,FromCurrency,unique_date_from_to,NULL,NULL
+currencyexchange,ToCurrency,unique_date_from_to,NULL,NULL
+customer,CustomerKey,PRIMARY,NULL,NULL
+date,DateKey,PRIMARY,NULL,NULL
+orderrows,OrderRowsKey,PRIMARY,NULL,NULL
+orderrows,OrderKey,unique_orderkey_linenumber,NULL,NULL
+orderrows,LineNumber,unique_orderkey_linenumber,NULL,NULL
+orders,OrderKey,PRIMARY,NULL,NULL
+product,ProductKey,PRIMARY,NULL,NULL
+productcategory,ProductCategoryKey,PRIMARY,NULL,NULL
+sales,SalesKey,PRIMARY,NULL,NULL
+schemachangelog,SchemaChangeLogKey,PRIMARY,NULL,NULL
+users,UserKey,PRIMARY,NULL,NULL
+users,UserName,UserName,NULL,NULL

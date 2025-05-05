@@ -1,0 +1,13 @@
+TABLE_NAME,TABLE_TYPE
+currencyexchange,"BASE TABLE"
+customer,"BASE TABLE"
+date,"BASE TABLE"
+geoarea,"BASE TABLE"
+orderrows,"BASE TABLE"
+orders,"BASE TABLE"
+product,"BASE TABLE"
+productcategory,"BASE TABLE"
+sales,"BASE TABLE"
+schemachangelog,"BASE TABLE"
+store,"BASE TABLE"
+users,"BASE TABLE"

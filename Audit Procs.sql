@@ -1,31 +1,21 @@
-SELECT 
-	ROUTINE_NAME
-    , ROUTINE_TYPE
-    , DTD_IDENTIFIER AS RETURNS
-    , ROUTINE_DEFINITION
-    
-FROM INFORMATION_SCHEMA.ROUTINES
-
-WHERE 
-	ROUTINE_TYPE IN ('PROCEDURE','FUNCTION')
-  AND ROUTINE_SCHEMA = 'contoso';
-
 ## SchemaChangeLog
 DELIMITER //  
-
 -- Schema log entry 
 DROP PROCEDURE IF EXISTS contoso.LogSchemaChange;         
 CREATE PROCEDURE contoso.LogSchemaChange (
     IN SchemaName VARCHAR(128),
     IN TableName VARCHAR(128),
-    IN ExecutedSQL TEXT
+    IN ExecutedSQL TEXT,
+    IN ExecutedBy VARCHAR(50)
 )
 BEGIN
-    INSERT INTO SchemaChangeLog (SchemaName, TableName, ExecutedSQL)
-    VALUES (SchemaName, TableName, ExecutedSQL);
+    INSERT INTO SchemaChangeLog (SchemaName, TableName, ExecutedSQL,ExecutedBy)
+    VALUES (SchemaName, TableName, ExecutedSQL,ExecutedBy);
 END;
+// DELIMITER ;
 
 
+DELIMITER //  
 -- add audit column to all tables 
 DROP PROCEDURE IF EXISTS contoso.AddMissingAuditColumns;
 CREATE PROCEDURE contoso.AddMissingAuditColumns(IN target_schema VARCHAR(64))
@@ -37,7 +27,9 @@ BEGIN
         SELECT TABLE_NAME
         FROM INFORMATION_SCHEMA.TABLES
         WHERE TABLE_SCHEMA = target_schema
-          AND TABLE_TYPE = 'BASE TABLE';
+          AND TABLE_TYPE = 'BASE TABLE'
+          AND TABLE_NAME <> 'schemachangelog';
+          
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
@@ -88,7 +80,7 @@ BEGIN
               AND TABLE_NAME = tbl_name 
               AND COLUMN_NAME = 'UpdatedDate'
         ) THEN
-            SET @sql_parts := CONCAT(@sql_parts, ', ADD COLUMN UpdatedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+            SET @sql_parts := CONCAT(@sql_parts, ', ADD COLUMN UpdatedDate DATETIME');
         END IF;
 
         -- Execute ALTER TABLE if needed
@@ -100,7 +92,7 @@ BEGIN
             DEALLOCATE PREPARE stmt;
 
             -- Log the executed SQL
-            CALL LogSchemaChange(target_schema, tbl_name, @alter_stmt);
+            CALL LogSchemaChange(target_schema, tbl_name, @alter_stmt, CURRENT_USER());
         END IF;
 
     END LOOP;
@@ -124,10 +116,10 @@ BEGIN
         SELECT TABLE_NAME, COLUMN_NAME
         FROM INFORMATION_SCHEMA.COLUMNS
         WHERE TABLE_SCHEMA = target_schema
-          AND COLUMN_NAME IN ('CreatedBy', 'ModifiedBy')
-          AND TABLE_NAME NOT IN ('users');
+          AND COLUMN_NAME = 'CreatedBy'
+          AND TABLE_NAME NOT IN ('users', 'schemachangelog');
 
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 0;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
     OPEN cur;
 
@@ -154,7 +146,7 @@ END
 
 
 DELIMITER //
-CALL contoso.AddMissingAuditColumns('contoso'); 
-CALL contoso.UpdateAuditFields('contoso')
+	CALL contoso.AddMissingAuditColumns('contoso'); 
+	CALL contoso.UpdateAuditFields('contoso');
 // DELIMITER ;
 

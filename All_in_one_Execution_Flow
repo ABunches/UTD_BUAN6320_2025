@@ -1,0 +1,31 @@
+// All in one.sql Execution Order
+digraph {
+	S [label="SET GLOBALS"]
+	T1 [label="Create Tables & Insert Data
+(Users, SchemaChangeLog, GeoArea, ProductCategorySubCategory)"]
+	C1 [label="ALTER TABLE
+(PKs, Unique Constraints)"]
+	C2 [label="CREATE INDEX"]
+	U1 [label="Assign Surrogate Keys
+(UPDATE)"]
+	FK [label="Add Foreign Keys"]
+	F [label="Create Functions
+(RandomDate, RandomUser, GenerateTrackingNumber)"]
+	P [label="Create Procedures
+(LogSchemaChange, AddMissingAuditColumns, UpdateAuditFields)"]
+	Call1 [label="CALL AddMissingAuditColumns"]
+	TR [label="Create Triggers
+(BEFORE UPDATE & BEFORE INSERT)"]
+	Call2 [label="CALL UpdateAuditFields
+(triggers fire and populate audit fields)"]
+	S -> T1
+	T1 -> C1
+	C1 -> C2
+	C2 -> U1
+	U1 -> FK
+	FK -> F
+	F -> P
+	P -> Call1
+	Call1 -> TR
+	TR -> Call2
+}
