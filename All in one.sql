@@ -421,44 +421,66 @@ USE Contoso;
 
     DELIMITER //
         -- generate user info for all tables
-        DROP PROCEDURE IF EXISTS UpdateAuditFields;
-        CREATE PROCEDURE contoso.UpdateAuditFields(IN target_schema VARCHAR(255))
-        BEGIN
-            DECLARE done INT DEFAULT 0;
-            DECLARE tablename VARCHAR(255);
-            DECLARE colname VARCHAR(64);
-            DECLARE sql_stmt TEXT;
+             DROP PROCEDURE IF EXISTS contoso.UpdateAuditFields;
+             CREATE PROCEDURE contoso.UpdateAuditFields(
+                 IN target_schema VARCHAR(255),
+                 IN batch_size INT,
+                 OUT rows_updated INT
+             )
+             BEGIN
+                 DECLARE done INT DEFAULT 0;
+                 DECLARE tablename VARCHAR(255);
+                 DECLARE colname VARCHAR(64);
+                 DECLARE sql_stmt TEXT;
+                 DECLARE rows_affected INT;
+                 DECLARE batch_rows_updated INT;
 
-            DECLARE cur CURSOR FOR
-                SELECT TABLE_NAME, COLUMN_NAME
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = target_schema
-                AND COLUMN_NAME = 'CreatedBy'
-                AND TABLE_NAME NOT IN ('users', 'schemachangelog');
+                 DECLARE cur CURSOR FOR
+                     SELECT TABLE_NAME, COLUMN_NAME
+                     FROM INFORMATION_SCHEMA.COLUMNS
+                     WHERE TABLE_SCHEMA = target_schema
+                     AND COLUMN_NAME = 'CreatedBy'
+                     AND TABLE_NAME NOT IN ('users', 'schemachangelog');
 
-            DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 0;
+                 DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
-            OPEN cur;
+                 SET batch_rows_updated = 0;
 
-            read_loop: LOOP
-                FETCH cur INTO tablename, colname;
-                IF done THEN
-                    LEAVE read_loop;
-                END IF;
+                 OPEN cur;
 
-                SET @sql_stmt = CONCAT(
-                    'UPDATE `', target_schema, '`.`', tablename, '` ',
-                    'SET `', colname, '` = RandomUser() ',
-                    'WHERE `', colname, '` IS NULL'
-                );
+                 read_loop: LOOP
+                     FETCH cur INTO tablename, colname;
+                     IF done THEN
+                         LEAVE read_loop;
+                     END IF;
 
-                PREPARE stmt FROM @sql_stmt;
-                EXECUTE stmt;
-                DEALLOCATE PREPARE stmt;
-            END LOOP;
+                     SET rows_affected = batch_size;
 
-            CLOSE cur;
-        END
+                     update_loop: WHILE rows_affected = batch_size DO
+
+                         SET @sql_stmt = CONCAT(
+                             'UPDATE `', target_schema, '`.`', tablename, '` ',
+                             'SET `', colname, '` = RandomUser() ',
+                             'WHERE `', colname, '` IS NULL ',
+                             'LIMIT ', batch_size, ';'
+                         );
+
+                         PREPARE stmt FROM @sql_stmt;
+                         EXECUTE stmt;
+
+                         SET rows_affected = ROW_COUNT();
+                         DEALLOCATE PREPARE stmt;
+
+                         SET batch_rows_updated = batch_rows_updated + rows_affected;
+
+                         IF rows_affected = 0 THEN
+                             LEAVE update_loop;
+                         END IF;
+                     END WHILE update_loop;
+                 END LOOP read_loop;
+                 CLOSE cur;
+                 SET rows_updated = batch_rows_updated;
+             END
     // DELIMITER ;
 
 
