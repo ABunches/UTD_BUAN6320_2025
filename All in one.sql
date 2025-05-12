@@ -1,4 +1,3 @@
-
 SET GLOBAL innodb_buffer_pool_size = 10737418240;  -- 10 GB for pooling assuming 16 GB RAM Free
 SET GLOBAL wait_timeout = 2400; 
 SET GLOBAL interactive_timeout = 2400;
@@ -9,9 +8,9 @@ SET GLOBAL wait_timeout = 2400;
 
 USE Contoso;
 
-# Derive new tables!  ###########################################################################################################################
+-- Derive new tables!  ###########################################################################################################################
 
-    ## Users
+    -- Users
     DROP TABLE IF EXISTS Contoso.users;
     CREATE TABLE IF NOT EXISTS contoso.Users (
         UserKey INT NOT NULL AUTO_INCREMENT
@@ -25,6 +24,7 @@ USE Contoso;
         ,PRIMARY KEY (UserKey)
     );
 
+
     INSERT INTO Users 	(UserName				,FirstName	,LastName	,UpdatedBy	,UpdatedDate		,CreatedBy	,CreatedDate)
             VALUES		("Admin@LocalHost"		,"Service"	,"Account"	,"Admin"	,current_timestamp	,"Admin"	,"2024-06-01 09:15:00"),
                         ("Sudo@LocalHost"		,"Alex"		,"Bunch"	,"Admin"	,current_timestamp	,"Admin"	,"2024-06-01 09:15:01"),
@@ -37,8 +37,7 @@ USE Contoso;
                         ("tjohnson@LocalHost"	,"Tom"		,"Johnson"	,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-07 11:30:00"),
                         ("ycho@LocalHost"		,"Yuna"		,"Cho"		,"Sudo"		,current_timestamp	,"Sudo"		,"2024-06-08 15:20:00");
             
-            
-    ## SchemaChangeLog
+    -- SchemaChangeLog
     DROP TABLE IF EXISTS contoso.SchemaChangeLog;
         CREATE TABLE IF NOT EXISTS contoso.SchemaChangeLog (
         SchemaChangeLogKey INT NOT NULL AUTO_INCREMENT
@@ -50,8 +49,7 @@ USE Contoso;
         ,PRIMARY KEY (SchemaChangeLogKey)
     );            
 
-
-    ## GeoArea
+    -- GeoArea
     DROP TABLE IF EXISTS contoso.GeoArea;
     CREATE TABLE IF NOT EXISTS contoso.GeoArea (
         GeoAreaKey INT NOT NULL
@@ -60,6 +58,7 @@ USE Contoso;
         , Country VARCHAR(255)
         , CountryFull VARCHAR(255)
     );
+
     INSERT INTO contoso.GeoArea ( GeoAreaKey, State, StateFull, Country, CountryFull)
         -- Trim functions due to bad record
         SELECT DISTINCT 
@@ -76,7 +75,7 @@ USE Contoso;
             ,StateFull ASC;
         
         
-    ## ProductCategorySubCategory
+    -- ProductCategorySubCategory
     DROP TABLE IF EXISTS contoso.ProductCategorySubCategory;
     CREATE TABLE ProductCategory (
         ProductCategoryKey INT NOT NULL AUTO_INCREMENT
@@ -90,6 +89,7 @@ USE Contoso;
         ,CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
         ,PRIMARY KEY (ProductCategoryKey)
     );
+
     INSERT INTO contoso.ProductCategory (CategoryKey,CategoryName,SubCategoryKey,SubCategoryName,UpdatedBy,CreatedBy)
     SELECT DISTINCT
         TRIM(CategoryKey) 'CategoryKey'
@@ -101,11 +101,10 @@ USE Contoso;
 
     FROM contoso.product
 
-    ORDER BY 
-        CategoryKey ASC;
+    ORDER BY CategoryKey ASC;
 
 
-# Table Modifications ###########################################################################################################################
+-- Table Modifications ###########################################################################################################################
     DELIMITER //
         ALTER TABLE contoso.currencyexchange
         ADD CONSTRAINT unique_date_from_to UNIQUE (Date, FromCurrency, ToCurrency);
@@ -149,8 +148,9 @@ USE Contoso;
     DELIMITER // ; 
 
 
-# Add indexes to the tables ###########################################################################################################################
+-- Add indexes to the tables ###########################################################################################################################
     DELIMITER //
+
         ALTER TABLE contoso.currencyexchange
         ADD INDEX idx_FromCurrency (FromCurrency);
 
@@ -187,11 +187,45 @@ USE Contoso;
         ALTER TABLE contoso.ProductCategory 
         ADD INDEX idx_SubCategoryName(SubCategoryName);
 
+        ALTER TABLE contoso.currencyexchange 
+        ADD INDEX idx_currencyexchange_CreatedBy (CreatedBy);
+        
+        ALTER TABLE contoso.customer 
+        ADD INDEX idx_customer_CreatedBy (CreatedBy);
+        
+        ALTER TABLE contoso.date 
+        ADD INDEX idx_date_CreatedBy (CreatedBy);
+        
+        ALTER TABLE contoso.geoarea 
+        ADD INDEX idx_geoarea_CreatedBy (CreatedBy);
+        
+        ALTER TABLE contoso.orderrows 
+        ADD INDEX idx_orderrows_CreatedBy (CreatedBy);
+        
+        ALTER TABLE contoso.orders 
+        ADD INDEX idx_orders_CreatedBy (CreatedBy);
+        
+        ALTER TABLE contoso.product 
+        ADD INDEX idx_product_CreatedBy (CreatedBy);
+        
+        ALTER TABLE contoso.productcategory 
+        ADD INDEX idx_productcategory_CreatedBy (CreatedBy);
+        
+        ALTER TABLE contoso.sales 
+        ADD INDEX idx_sales_CreatedBy (CreatedBy);
+        
+        ALTER TABLE contoso.store 
+        ADD INDEX idx_store_CreatedBy (CreatedBy);
+        
+        ALTER TABLE contoso.users 
+        ADD INDEX idx_users_CreatedBy (CreatedBy);
+
     // DELIMITER ;
 
 
-# Update Keys.  ###########################################################################################################################
+-- Update Keys.  ###########################################################################################################################
     DELIMITER //
+
         SET @rownum = 0;
         UPDATE contoso.Sales SET SalesKey = (@rownum := @rownum + 1);
 
@@ -200,22 +234,28 @@ USE Contoso;
 
         SET @rownum = 0;
         UPDATE contoso.currencyexchange SET CurrencyExchangeKey = (@rownum := @rownum + 1);
+
     // DELIMITER ;
 
 
-# Update Columns as Primary Keys ########################################################################################################################### 
+-- Update Columns as Primary Keys ###########################################################################################################################
     DELIMITER //
+
         ALTER TABLE contoso.sales 
         MODIFY COLUMN SalesKey INT NOT NULL AUTO_INCREMENT PRIMARY KEY;
+        
         ALTER TABLE contoso.orderrows 
         MODIFY COLUMN OrderRowsKey INT NOT NULL AUTO_INCREMENT PRIMARY KEY;
+        
         ALTER TABLE contoso.currencyexchange 
         MODIFY COLUMN CurrencyExchangeKey INT NOT NULL AUTO_INCREMENT PRIMARY KEY;
+    
     DELIMITER // ;
 
 
-# Create Foreign Keys ###########################################################################################################################
+-- Create Foreign Keys ###########################################################################################################################
     DELIMITER //
+
         ALTER TABLE contoso.customer
         ADD CONSTRAINT fk_customer_geoarea
         FOREIGN KEY (GeoAreaKey)
@@ -260,10 +300,11 @@ USE Contoso;
         ADD CONSTRAINT fk_sales_product
         FOREIGN KEY (productkey)
         REFERENCES product(productkey);
+
     // DELIMITER ;        
 
 
-# Create Functions ###########################################################################################################################
+-- Create Functions ###########################################################################################################################
     DELIMITER //
         -- return random date
         CREATE FUNCTION RandomDate(start_date DATE, end_date DATE)
@@ -317,7 +358,7 @@ USE Contoso;
 
 
 
-# Create procedures ###########################################################################################################################
+-- Create procedures ###########################################################################################################################
     DELIMITER //  
     -- Schema log entry 
         DROP PROCEDURE IF EXISTS contoso.LogSchemaChange;         
@@ -484,13 +525,13 @@ USE Contoso;
     // DELIMITER ;
 
 
-# Run AddMissingAuditColumns ###########################################################################################################################
+-- Run AddMissingAuditColumns ###########################################################################################################################
     DELIMITER //
         CALL contoso.AddMissingAuditColumns('contoso'); 
     // DELIMITER ;
 
 
-# Add triggers to set CreatedBy, CreatedDate, UpdatedBy, UpdatedDate fields #######################################################################
+-- Add triggers to set CreatedBy, CreatedDate, UpdatedBy, UpdatedDate fields #######################################################################
     DELIMITER //
         CREATE TRIGGER currencyexchange_set_random_updated_by
         BEFORE UPDATE ON contoso.currencyexchange
@@ -924,9 +965,3 @@ USE Contoso;
             SET NEW.CreatedDate = CURRENT_TIMESTAMP;
         END;
     // DELIMITER ;
-
-
-# Run UpdateAuditFields ###########################################################################################################################
-    DELIMITER //
-    CALL contoso.UpdateAuditFields('contoso');
-     // DELIMITER ;
